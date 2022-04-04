@@ -1,0 +1,3 @@
+[build]
+	publish= "js-portfolio/dist"
+	command= "cd /js-portfolio && npm run build"
