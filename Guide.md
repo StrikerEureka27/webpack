@@ -613,6 +613,310 @@ module.exports = {
 }
 ```
 
+## Webpack Alias
+
+Nos permite identificar de mejor manera los recursos que utilizamos al momento de realizar un import, por lo tanto en el apartado de result vamos a agregar lo siguiente:
+
+```js
+resolve: {
+        extensions: [".js"], 
+        alias: { // agregamos alias para las rutas
+            "@utils": path.resolve(__dirname, 'src/utils'),
+            "@templates": path.resolve(__dirname, 'src/templates'),
+            "@styles": path.resolve(__dirname, 'src/styles'),
+            "@images": path.resolve(__dirname, 'src/assets/images')
+        }
+    }, 
+```
+
+## Deploy de un proyecto
+
+### Variables de entorno
+
+Lo primero que debemos hacer es instalar una dependencias que nos ayude a utilizar variables de entorno
+
+```
+npm install dotenv-webpack -D
+```
+
+Luego creamos dos archivos *.env* y *.env-examples* para poder almacenar la especificacion y nuestras variables de entorno como tal. 
+
+*.env*
+
+```
+API=https://randomuser.me/api/
+```
+
+*.env-examples*
+
+```
+API=
+```
+
+Para terminar agregamos el plugin a nuestra configuración de webpack.config.js
+
+```js
+const path = require("path");
+const htmlWebpackPlugin = require("html-webpack-plugin");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
+const TerserPlugin = require("terser-webpack-plugin");
+// Agregamos el import del plugin 
+const DotEnv = require("dotenv-webpack")
+
+
+module.exports = {
+    entry: "./src/index.js",
+    output: {
+        path: path.resolve(__dirname, "dist"), 
+        filename: "[name][contenthash].js",
+        assetModuleFilename: 'assets/images/[hash][ext][query]'
+    },
+    resolve: {
+        extensions: [".js"], 
+        alias: {
+            "@utils": path.resolve(__dirname, 'src/utils'),
+            "@templates": path.resolve(__dirname, 'src/templates'),
+            "@styles": path.resolve(__dirname, 'src/styles'),
+            "@images": path.resolve(__dirname, 'src/assets/images')
+        }
+    }, 
+    module: {
+        rules: [
+        {
+            test: /\.m?js$/, 
+            exclude: /node_modules/,
+            use: {
+                loader: "babel-loader"
+            }
+        },
+        {
+            test: /\.css$/i,
+            use: [
+                MiniCssExtractPlugin.loader, 
+                'css-loader'
+            ]
+        }, 
+        {
+            test: /\.(png|svg|jpg|jpeg|gif)/, 
+            type: "asset/resource",
+        }, 
+        {
+            test: /\.(woff|woff2)$/, 
+            type: "asset/resource",
+            generator: {
+                filename: "assets/fonts/[hash][ext]",
+            }
+        }
+    ]},
+    plugins: [
+        new htmlWebpackPlugin({
+            inject: true, 
+            template:'./public/index.html', 
+            filename: './index.html'
+        }), 
+        new MiniCssExtractPlugin({
+            filename: "assets/[name][contenthash].css"
+        }),
+        new DotEnv(), // Agregamos el nuevo plugin				
+    ], 
+    optimization: {
+        minimize: true, 
+        minimizer: [
+            new CssMinimizerPlugin(),
+            new TerserPlugin()           
+        ]
+    }
+}
+```
+
+### Webpack en modo desarrollo 
+
+Tener un archivo propio de configuraciones para desarrollo. 
+
+Generamos el archivo *webpack.config.dev.js* 
+
+```js
+const path = require("path");
+const htmlWebpackPlugin = require("html-webpack-plugin");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const DotEnv = require("dotenv-webpack");
+
+
+module.exports = {
+    entry: "./src/index.js",
+    output: {
+        path: path.resolve(__dirname, "dist"), 
+        filename: "[name][contenthash].js",
+        assetModuleFilename: 'assets/images/[hash][ext][query]'
+    },
+    mode: "development",
+    resolve: {
+        extensions: [".js"], 
+        alias: {
+            "@utils": path.resolve(__dirname, 'src/utils'),
+            "@templates": path.resolve(__dirname, 'src/templates'),
+            "@styles": path.resolve(__dirname, 'src/styles'),
+            "@images": path.resolve(__dirname, 'src/assets/images')
+        }
+    }, 
+    module: {
+        rules: [
+        {
+            test: /\.m?js$/, 
+            exclude: /node_modules/,
+            use: {
+                loader: "babel-loader"
+            }
+        },
+        {
+            test: /\.css$/i,
+            use: [
+                MiniCssExtractPlugin.loader, 
+                'css-loader'
+            ]
+        }, 
+        {
+            test: /\.(png|svg|jpg|jpeg|gif)/, 
+            type: "asset/resource",
+        }, 
+        {
+            test: /\.(woff|woff2)$/, 
+            type: "asset/resource",
+            generator: {
+                filename: "assets/fonts/[hash][ext]",
+            }
+        }
+    ]},
+    plugins: [
+        new htmlWebpackPlugin({
+            inject: true, 
+            template:'./public/index.html', 
+            filename: './index.html'
+        }), 
+        new MiniCssExtractPlugin({
+            filename: "assets/[name][contenthash].css"
+        }),
+        new DotEnv()
+    ], 
+    
+}
+```
+
+> Por lo general le retiramos aspectos relacionados con la optimización, para tener una visualización mejor de nuestro código y poder realizar un debbugin correcto. 
+
+### webpack en modo producción 
+
+Para el modo producción podemos adicionar una herramienta para limpiar nuestra salida en este caso la carpeta de dist. 
+
+```
+npm install clean-webpack-plugin -D
+```
+
+Luego agregamos el plugin a nuestra configuración de webpack
+
+```js
+const path = require("path");
+const htmlWebpackPlugin = require("html-webpack-plugin");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
+const TerserPlugin = require("terser-webpack-plugin");
+const DotEnv = require("dotenv-webpack")
+const { CleanWebpackPlugin } = require("clean-webpack-plugin");
+
+module.exports = {
+    entry: "./src/index.js",
+    output: {
+        path: path.resolve(__dirname, "dist"), 
+        filename: "[name][contenthash].js",
+        assetModuleFilename: 'assets/images/[hash][ext][query]'
+    },
+    mode: "production",
+    resolve: {
+        extensions: [".js"], 
+        alias: {
+            "@utils": path.resolve(__dirname, 'src/utils'),
+            "@templates": path.resolve(__dirname, 'src/templates'),
+            "@styles": path.resolve(__dirname, 'src/styles'),
+            "@images": path.resolve(__dirname, 'src/assets/images')
+        }
+    }, 
+    module: {
+        rules: [
+        {
+            test: /\.m?js$/, 
+            exclude: /node_modules/,
+            use: {
+                loader: "babel-loader"
+            }
+        },
+        {
+            test: /\.css$/i,
+            use: [
+                MiniCssExtractPlugin.loader, 
+                'css-loader'
+            ]
+        }, 
+        {
+            test: /\.(png|svg|jpg|jpeg|gif)/, 
+            type: "asset/resource",
+        }, 
+        {
+            test: /\.(woff|woff2)$/, 
+            type: "asset/resource",
+            generator: {
+                filename: "assets/fonts/[hash][ext]",
+            }
+        }
+    ]},
+    plugins: [
+        new htmlWebpackPlugin({
+            inject: true, 
+            template:'./public/index.html', 
+            filename: './index.html'
+        }), 
+        new MiniCssExtractPlugin({
+            filename: "assets/[name][contenthash].css"
+        }),
+        new DotEnv(),
+    ], 
+    optimization: {
+        minimize: true, 
+        minimizer: [
+            new CssMinimizerPlugin(),
+            new TerserPlugin(), 
+            new CleanWebpackPlugin()      
+        ]
+    }
+}
+```
+
+### webpack watch 
+
+Esta opción nos permite detectar los cambios dentro de nuestro proyecto. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

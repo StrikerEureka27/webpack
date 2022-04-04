@@ -1,13 +1,8 @@
 const path = require("path");
 const htmlWebpackPlugin = require("html-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const DotEnv = require("dotenv-webpack");
 
-const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
-const TerserPlugin = require("terser-webpack-plugin");
-// const CopyPlugin = require("copy-webpack-plugin");
-
-const DotEnv = require("dotenv-webpack")
-const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 
 module.exports = {
     entry: "./src/index.js",
@@ -16,7 +11,7 @@ module.exports = {
         filename: "[name][contenthash].js",
         assetModuleFilename: 'assets/images/[hash][ext][query]'
     },
-    mode: "production",
+    mode: "development",
     resolve: {
         extensions: [".js"], 
         alias: {
@@ -63,22 +58,7 @@ module.exports = {
         new MiniCssExtractPlugin({
             filename: "assets/[name][contenthash].css"
         }),
-        new DotEnv(),
-        // new CopyPlugin({
-        //     patterns: [
-        //         {
-        //             from: path.resolve(__dirname, "src", "assets/images"), 
-        //             to: "assets/images"
-        //         }
-        //     ]
-        // })
+        new DotEnv()
     ], 
-    optimization: {
-        minimize: true, 
-        minimizer: [
-            new CssMinimizerPlugin(),
-            new TerserPlugin(), 
-            new CleanWebpackPlugin()      
-        ]
-    }
+    
 }
