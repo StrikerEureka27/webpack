@@ -893,17 +893,271 @@ module.exports = {
 
 ### webpack watch 
 
-Esta opción nos permite detectar los cambios dentro de nuestro proyecto. 
+Esta opción nos permite detectar los cambios dentro de nuestro proyecto, por lo tanto podemos agregar el siguiente script a nuestro package.json.
+
+```
+"watch": "npm run dev --watch"
+```
 
 
 
+## Webpack dev-server
+
+```
+npm install webpack-dev-server -D
+```
+
+Luego debemos de agregar la configuración a nuestro archivo *webpack.config.dev.js*
+
+```js
+const path = require("path");
+const htmlWebpackPlugin = require("html-webpack-plugin");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const DotEnv = require("dotenv-webpack");
 
 
+module.exports = {
+    entry: "./src/index.js",
+    output: {
+        path: path.resolve(__dirname, "dist"), 
+        filename: "[name][contenthash].js",
+        assetModuleFilename: 'assets/images/[hash][ext][query]'
+    },
+    mode: "development",
+    resolve: {
+        extensions: [".js"], 
+        alias: {
+            "@utils": path.resolve(__dirname, 'src/utils'),
+            "@templates": path.resolve(__dirname, 'src/templates'),
+            "@styles": path.resolve(__dirname, 'src/styles'),
+            "@images": path.resolve(__dirname, 'src/assets/images')
+        }
+    }, 
+    module: {
+        rules: [
+        {
+            test: /\.m?js$/, 
+            exclude: /node_modules/,
+            use: {
+                loader: "babel-loader"
+            }
+        },
+        {
+            test: /\.css$/i,
+            use: [
+                MiniCssExtractPlugin.loader, 
+                'css-loader'
+            ]
+        }, 
+        {
+            test: /\.(png|svg|jpg|jpeg|gif)/, 
+            type: "asset/resource",
+        }, 
+        {
+            test: /\.(woff|woff2)$/, 
+            type: "asset/resource",
+            generator: {
+                filename: "assets/fonts/[hash][ext]",
+            }
+        }
+    ]},
+    plugins: [
+        new htmlWebpackPlugin({
+            inject: true, 
+            template:'./public/index.html', 
+            filename: './index.html'
+        }), 
+        new MiniCssExtractPlugin({
+            filename: "assets/[name][contenthash].css"
+        }),
+        new DotEnv()
+    ], 
+    devServer: {
+        static: path.join(__dirname, 'dist'), 
+        compress: true, 
+        historyApiFallback: true // info extra del navegador
+        port: 3006, 
+        open: true
+    }
+    
+}
+```
 
+## Webpack bundle Analyzer 
 
+Herramienta para ver gráficamente la gestión de nuestros bundles y poder optimizarlos. 
 
+```
+npm install webpack-bundle-analyzer -D
+```
 
+Luego agregamos la configuración a nuestro archivo de desarrollo
 
+```js
+const path = require("path");
+const htmlWebpackPlugin = require("html-webpack-plugin");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const DotEnv = require("dotenv-webpack");
+// Agregamos la configuracion a BundleAnalyzerPlugin
+const BundleAnalyzerPlugin = require("webpack-bundle-analyzer");
+
+module.exports = {
+    entry: "./src/index.js",
+    output: {
+        path: path.resolve(__dirname, "dist"), 
+        filename: "[name][contenthash].js",
+        assetModuleFilename: 'assets/images/[hash][ext][query]'
+    },
+    mode: "development",
+    resolve: {
+        extensions: [".js"], 
+        alias: {
+            "@utils": path.resolve(__dirname, 'src/utils'),
+            "@templates": path.resolve(__dirname, 'src/templates'),
+            "@styles": path.resolve(__dirname, 'src/styles'),
+            "@images": path.resolve(__dirname, 'src/assets/images')
+        }
+    }, 
+    module: {
+        rules: [
+        {
+            test: /\.m?js$/, 
+            exclude: /node_modules/,
+            use: {
+                loader: "babel-loader"
+            }
+        },
+        {
+            test: /\.css$/i,
+            use: [
+                MiniCssExtractPlugin.loader, 
+                'css-loader'
+            ]
+        }, 
+        {
+            test: /\.(png|svg|jpg|jpeg|gif)/, 
+            type: "asset/resource",
+        }, 
+        {
+            test: /\.(woff|woff2)$/, 
+            type: "asset/resource",
+            generator: {
+                filename: "assets/fonts/[hash][ext]",
+            }
+        }
+    ]},
+    plugins: [
+        new htmlWebpackPlugin({
+            inject: true, 
+            template:'./public/index.html', 
+            filename: './index.html'
+        }), 
+        new MiniCssExtractPlugin({
+            filename: "assets/[name][contenthash].css"
+        }),
+        new DotEnv(), 
+        new BundleAnalyzerPlugin(), // Agregamos el plugin a la lista
+    ], 
+    devServer: {
+        static: path.join(__dirname, 'dist'), 
+        compress: true, 
+        historyApiFallback: true, 
+        port: 3006, 
+        open: true
+    }
+}
+```
+
+Luego para ver el análisis
+
+```
+npx webpack --profile --json > stats.json
+
+npx webpack --profile --json | Out-file 'stats.json' -Encoding OEM
+
+-- Luego
+
+npx webpack-bundle-analyzer stats.json
+```
+
+## Webpack dev tools
+
+Podemos agregar distintos parámetros de mapeo para ver el código en las devtools y poder hacer debuggin. 
+
+```js
+const path = require("path");
+const htmlWebpackPlugin = require("html-webpack-plugin");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const DotEnv = require("dotenv-webpack");
+const BundleAnalyzerPlugin = require("webpack-bundle-analyzer").BundleAnalyzerPlugin;
+
+module.exports = {
+    entry: "./src/index.js",
+    output: {
+        path: path.resolve(__dirname, "dist"), 
+        filename: "[name][contenthash].js",
+        assetModuleFilename: 'assets/images/[hash][ext][query]'
+    },
+    mode: "development",
+    devtool: "source-map", // Agregamos el parametro
+    resolve: {
+        extensions: [".js"], 
+        alias: {
+            "@utils": path.resolve(__dirname, 'src/utils'),
+            "@templates": path.resolve(__dirname, 'src/templates'),
+            "@styles": path.resolve(__dirname, 'src/styles'),
+            "@images": path.resolve(__dirname, 'src/assets/images')
+        }
+    }, 
+    module: {
+        rules: [
+        {
+            test: /\.m?js$/, 
+            exclude: /node_modules/,
+            use: {
+                loader: "babel-loader"
+            }
+        },
+        {
+            test: /\.css$/i,
+            use: [
+                MiniCssExtractPlugin.loader, 
+                'css-loader'
+            ]
+        }, 
+        {
+            test: /\.(png|svg|jpg|jpeg|gif)/, 
+            type: "asset/resource",
+        }, 
+        {
+            test: /\.(woff|woff2)$/, 
+            type: "asset/resource",
+            generator: {
+                filename: "assets/fonts/[hash][ext]",
+            }
+        }
+    ]},
+    plugins: [
+        new htmlWebpackPlugin({
+            inject: true, 
+            template:'./public/index.html', 
+            filename: './index.html'
+        }), 
+        new MiniCssExtractPlugin({
+            filename: "assets/[name][contenthash].css"
+        }),
+        new DotEnv(), 
+        new BundleAnalyzerPlugin(),
+    ], 
+    devServer: {
+        static: path.join(__dirname, 'dist'), 
+        compress: true, 
+        historyApiFallback: true, // info extra del navegador
+        port: 3006, 
+        open: true
+    }
+}
+```
 
 
 

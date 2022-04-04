@@ -2,7 +2,7 @@ const path = require("path");
 const htmlWebpackPlugin = require("html-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const DotEnv = require("dotenv-webpack");
-
+const BundleAnalyzerPlugin = require("webpack-bundle-analyzer").BundleAnalyzerPlugin;
 
 module.exports = {
     entry: "./src/index.js",
@@ -12,6 +12,7 @@ module.exports = {
         assetModuleFilename: 'assets/images/[hash][ext][query]'
     },
     mode: "development",
+    devtool: "source-map",
     resolve: {
         extensions: [".js"], 
         alias: {
@@ -58,7 +59,14 @@ module.exports = {
         new MiniCssExtractPlugin({
             filename: "assets/[name][contenthash].css"
         }),
-        new DotEnv()
+        new DotEnv(), 
+        new BundleAnalyzerPlugin(),
     ], 
-    
+    devServer: {
+        static: path.join(__dirname, 'dist'), 
+        compress: true, 
+        historyApiFallback: true, // info extra del navegador
+        port: 3006, 
+        open: true
+    }
 }
